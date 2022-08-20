@@ -1,13 +1,12 @@
 bl_info = {
     "name": "Import Plateau",
-    "author": "",
-    "version": (0, 9, 0),
-    "blender": (3, 1, 0),
-    "support":"TESTING",
+    "author": "Hin(@thamurian)",
+    "version": (1, 0, 0),
+    "blender": (3, 0, 0),
+    #"support":"TESTING",
     "category": "Import-Export",
-    "description": "Import geometry from CityGML file(s)",
+    "description": "Import geometry from CityGML file(s).",
     "wiki_url": "https://github.com/nneri-hin/Plateau-Blender-Importer",    
-#    "tracker_url": "http://  "
 }
 
 import os
@@ -32,7 +31,7 @@ from . import LoadGML
 class PlateauImporter(bpy.types.Operator, ImportHelper):
 
     bl_idname = "hin.plateau_importer"
-    bl_label = "pick an xml file(s)"
+    bl_label = "pick an gml file(s)"
     filename_ext = ".gml"
     use_filter_folder = True
     files: CollectionProperty(type=bpy.types.PropertyGroup)
