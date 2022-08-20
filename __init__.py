@@ -1,5 +1,5 @@
 bl_info = {
-    "name": "Import Plateau",
+    "name": "Import Plateau CityGML",
     "author": "Hin(@thamurian)",
     "version": (1, 0, 0),
     "blender": (3, 0, 0),
