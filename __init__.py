@@ -4,6 +4,7 @@ bl_info = {
     "version": (1, 0, 0),
     "blender": (3, 0, 0),
     #"support":"TESTING",
+    "location":"File > Import-Export",
     "category": "Import-Export",
     "description": "Import geometry from CityGML file(s).",
     "wiki_url": "https://github.com/nneri-hin/Plateau-Blender-Importer",    
