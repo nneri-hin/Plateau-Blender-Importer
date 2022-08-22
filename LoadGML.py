@@ -4,6 +4,7 @@
 import xml.etree.ElementTree as ET
 import json
 import bpy
+import bmesh
 import math
 from bpy_extras import object_utils
 import numpy as np
@@ -116,27 +117,54 @@ class LoadGML:
         verts = []
         for obj in result.objects:
             verts = []
+            vertsMerge={}
             faces = []
             vindex = 0
+            uvmap = []
+            enableUvmap = False
             for o2 in obj["posList"]:
                 lid = "-"
                 if o2["id"] != "0":
-                    pass
                     lid = "#"+o2["id"]
                     if lid in result.textures:
-                        pass
+                        print(result.textures[lid])
+                        enableUvmap = True
+                        uvmap.append(result.textures[lid])
+                    else:
+                        uvmap.append([])
+                else:
+                    uvmap.append([])
                 indexes = []
                 for i in range(0,len(o2["vertex"]),3):
                     lat = o2["vertex"][i]
                     lon = o2["vertex"][i+1] 
                     hig = o2["vertex"][i+2] 
-                    (x,y) = self.dc.calc(lat,lon,clat,clon)
-                    hig = hig - celev
-                    verts.append([x*scale,y*scale,hig*scale])
-                    indexes.append(vindex)
-                    vindex += 1
+                    key = str(lat)+","+str(lon)+","+str(hig)
+                    if key in vertsMerge:
+                        indexes.append(vertsMerge[key])
+                    else:
+                        vertsMerge[key] = vindex
+                        indexes.append(vindex)
+                        (x,y) = self.dc.calc(lat,lon,clat,clon)
+                        hig = hig - celev
+                        verts.append([x*scale,y*scale,hig*scale])
+                        vindex += 1
                 faces.append(indexes)
             n_mesh = bpy.data.meshes.new(obj["id"])
             n_mesh.from_pydata(verts,[],faces)
             n_mesh.update()
             object_utils.object_data_add(context, n_mesh, operator=None)
+            if enableUvmap :
+                #UVMapがあった場合面に設定する
+                bm = bmesh.new()
+                bm.from_mesh(n_mesh)
+                uv = bm.loops.layers.uv.new("UVMap")
+                cnt = 0
+                for face in bm.faces:
+                    #for loop in face.loops:
+                    for i in range(len(face.loops)):
+                        if len(uvmap[cnt]) > i* 2:
+                            face.loops[i][uv].uv = [uvmap[cnt][i*2],uvmap[cnt][i*2+1]]
+                    cnt += 1
+                bm.to_mesh(n_mesh)
+                n_mesh.update()
