@@ -58,23 +58,24 @@ class LoadGML:
         self.GMLID       = "{http://www.opengis.net/gml}id"
         self.STRINGATRIB = "{http://www.opengis.net/citygml/generics/2.0}stringAttribute"
         self.dc = DistanceCalc()
-    def searchPosList(self,data,posList):
+    def searchPosList(self,data,posList,enableTexture):
         for child in data:
             #if child.tag == self.STRINGATRIB:
             #    if child.attrib["name"] == "建物ID":
             #        bldgid = child[0].text
-            posList = self.searchPosList(child,posList)
+            (posList,enableTexture) = self.searchPosList(child,posList,enableTexture)
             if child.tag == self.POSLIST:
                 gmlid = "0"
                 if self.GMLID in data.attrib:
                     gmlid = data.attrib[self.GMLID] 
+                    enableTexture = True
                 posList.append({"id":gmlid,"vertex":np.asfarray(child.text.split(" "),dtype=float)})
-        return posList
+        return (posList,enableTexture)
     def CreateDict(self,data):
         gmlid = data.attrib[self.GMLID]
         posList = []
-        posList = self.searchPosList(data,posList)
-        return {"posList":posList,"id":gmlid}
+        (posList,enableTexture)= self.searchPosList(data,posList,False)
+        return {"posList":posList,"id":gmlid,"enableTexture":enableTexture}
 
     def CityObjectParse(self,data):
         for child in data:
@@ -113,29 +114,49 @@ class LoadGML:
                 result = self._parse(child,result)
         return result
 
+    def set_uvmap(self,n_mesh,uvmap):
+        #UVMapがあった場合面に設定する
+        bm = bmesh.new()
+        bm.from_mesh(n_mesh)
+        uv = bm.loops.layers.uv.new("UVMap")
+        cnt = 0
+        for face in bm.faces:
+            #for loop in face.loops:
+            for i in range(len(face.loops)):
+                if len(uvmap[cnt]) > i* 2:
+                    face.loops[i][uv].uv = [uvmap[cnt][i*2],uvmap[cnt][i*2+1]]
+            cnt += 1
+        bm.to_mesh(n_mesh)
+        n_mesh.update()
     def positionSet(self,result,clat,clon,celev,context,scale):
+        #tets用53393641
         verts = []
         for obj in result.objects:
             verts = []
             vertsMerge={}
             faces = []
+            faces_tex = []
             vindex = 0
             uvmap = []
-            enableUvmap = False
+            #print(obj["id"],obj["enableTexture"])
             for o2 in obj["posList"]:
                 lid = "-"
-                if o2["id"] != "0":
+                if obj["enableTexture"] and o2["id"] == "0":
+                    #テクスチャ有効時、idが0のものはスキップする
+                    continue
+                if obj["enableTexture"]:
                     lid = "#"+o2["id"]
                     if lid in result.textures:
-                        print(result.textures[lid])
-                        enableUvmap = True
                         uvmap.append(result.textures[lid])
                     else:
-                        uvmap.append([])
-                else:
-                    uvmap.append([])
+                        uvmap.append([0,0])
+                #else:
+                #    uvmap.append([])
                 indexes = []
                 for i in range(0,len(o2["vertex"]),3):
+                    #if obj["enableTexture"] and o2["id"] == "0":
+                    #    #テクスチャ有効時、idが0のものはスキップする
+                    #    continue
                     lat = o2["vertex"][i]
                     lon = o2["vertex"][i+1] 
                     hig = o2["vertex"][i+2] 
@@ -149,22 +170,19 @@ class LoadGML:
                         hig = hig - celev
                         verts.append([x*scale,y*scale,hig*scale])
                         vindex += 1
-                faces.append(indexes)
+                    #if obj["enableTexture"]:
+                    #    lid = "#"+o2["id"]
+                    #    if lid in result.textures:
+                    #        uvmap.append(result.textures[lid])
+                    #    else:
+                    #        uvmap.append([2,2])
+                    #else:
+                    #    uvmap.append([2,2])
+                if len(indexes) > 0 :
+                    faces.append(indexes)
             n_mesh = bpy.data.meshes.new(obj["id"])
             n_mesh.from_pydata(verts,[],faces)
             n_mesh.update()
             object_utils.object_data_add(context, n_mesh, operator=None)
-            if enableUvmap :
-                #UVMapがあった場合面に設定する
-                bm = bmesh.new()
-                bm.from_mesh(n_mesh)
-                uv = bm.loops.layers.uv.new("UVMap")
-                cnt = 0
-                for face in bm.faces:
-                    #for loop in face.loops:
-                    for i in range(len(face.loops)):
-                        if len(uvmap[cnt]) > i* 2:
-                            face.loops[i][uv].uv = [uvmap[cnt][i*2],uvmap[cnt][i*2+1]]
-                    cnt += 1
-                bm.to_mesh(n_mesh)
-                n_mesh.update()
+            if obj["enableTexture"] :
+                self.set_uvmap(n_mesh,uvmap)
