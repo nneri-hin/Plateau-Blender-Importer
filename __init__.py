@@ -1,9 +1,9 @@
 bl_info = {
     "name": "Import Plateau CityGML",
     "author": "Hin(@thamurian)",
-    "version": (1, 0, 0),
+    "version": (0, 9, 1),
     "blender": (3, 0, 0),
-    "support":"TESTING",
+    #"support":"TESTING",
     "location":"File > Import-Export",
     "category": "Import-Export",
     "description": "Import geometry from CityGML file(s).",
