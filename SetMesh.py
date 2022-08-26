@@ -38,7 +38,8 @@ class SetMesh:
             for i in range(len(face.loops)):
                 if len(uvmap[cnt]["uv"]) > i* 2:
                     face.loops[i][uv].uv = [uvmap[cnt]["uv"][i*2],uvmap[cnt]["uv"][i*2+1]]
-                    texture = uvmap[cnt]["texture"]
+                    if uvmap[cnt]["texture"] != "":
+                        texture = uvmap[cnt]["texture"]
             cnt += 1
         bm.to_mesh(n_mesh)
         n_mesh.update()
