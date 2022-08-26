@@ -238,17 +238,4 @@ class JapanMeshTool:
         #return new float[2] { (latlon1[0] + latlon2[0]) / 2, (latlon1[1] + latlon2[1]) / 2 }
         return [ (latlon1[0] + latlon2[0]) / 2 ,(latlon1[1] + latlon2[1]) /2]
 if __name__ == "__main__":
-    loader = LoadGML()
-    #loader.load("\models\Plateau\13100_tokyo23-ku_2020_citygml_3_2_op\udx\bldg\53393641_bldg_6697_2_op.gml")
-    filename = "/mnt/z/models/Plateau/13100_tokyo23-ku_2020_citygml_3_2_op/udx/bldg/53393641_bldg_6697_2_op.gml"
-    result = loader.load("/mnt/z/models/Plateau/13100_tokyo23-ku_2020_citygml_3_2_op/udx/bldg/53393641_bldg_6697_2_op.gml")
-    gmldata = loader.positionSet(result,135,39,0,1)
-    for data in gmldata["datas"]:
-        if data["obj"].enableTexture :
-            if len(data["uvmap"]) > 0 :
-                for uvmap in data["uvmap"]:
-                    pass
-                    #print(uvmap["texture"])
-                    #loader.get_image_path(filename,uvmap["texture"])
-
-    print(gmldata["textures"])
+    pass
