@@ -20,6 +20,7 @@ class Object:
         self.posList = posList
         self.enableTexture = enableTexture
         self.uri = uri
+        self.boundingBox = np.array([90,180,-90,-180,0,0],dtype=np.float64)
 class ParseResult:
     def __init__(self):
         self.objects = []
@@ -67,12 +68,10 @@ class LoadGML:
         self.STRINGATRIB = "{http://www.opengis.net/citygml/generics/2.0}stringAttribute"
         self.CITYOBJECT  = "{http://www.opengis.net/citygml/2.0}cityObjectMember"
         self.TEXCOORD    = "{http://www.opengis.net/citygml/appearance/2.0}TexCoordList"
+        self.BOUNDED     = "{http://www.opengis.net/citygml/building/2.0}boundedBy"
         self.dc = DistanceCalc()
     def searchPosList(self,data,posList,enableTexture,uri):
         for child in data:
-            #if child.tag == self.STRINGATRIB:
-            #    if child.attrib["name"] == "建物ID":
-            #        bldgid = child[0].text
             (posList,enableTexture,uri) = self.searchPosList(child,posList,enableTexture,uri)
             if child.tag == self.POSLIST:
                 gmlid = "0"
@@ -80,7 +79,7 @@ class LoadGML:
                     gmlid = data.attrib[self.GMLID] 
                     enableTexture = True
                 #posList.append({"id":gmlid,"vertex":np.asfarray(child.text.split(" "),dtype=float)})
-                posList.append(Verts(gmlid, np.asfarray(child.text.split(" "),dtype=float) ) )
+                posList.append(Verts(gmlid, np.asfarray(child.text.split(" "),dtype=np.float64) ) )
         return (posList,enableTexture,uri)
     def CreateDict(self,data):
         gmlid = data.attrib[self.GMLID]
@@ -90,8 +89,17 @@ class LoadGML:
         return Object(gmlid,posList,enableTexture,uri)
 
     def CityObjectParse(self,data):
+        maxPos = [-90,-180] 
+        minPos = [90,180]
         for child in data:
             city = self.CreateDict(child)
+            for p in city.posList:
+                city.boundingBox[0] = np.min(np.append(p.vertex[::3] , city.boundingBox[0]) )
+                city.boundingBox[1] = np.min(np.append(p.vertex[1::3] , city.boundingBox[1]) )
+                city.boundingBox[2] = np.max(np.append(p.vertex[::3] , city.boundingBox[2]) )
+                city.boundingBox[3] = np.max(np.append(p.vertex[1::3] , city.boundingBox[3]) )
+            city.boundingBox[4] = (city.boundingBox[0]+city.boundingBox[2])/2
+            city.boundingBox[5] = (city.boundingBox[1]+city.boundingBox[3])/2
         return city
 
     def UVParse(self,data,result,texture):
@@ -110,7 +118,6 @@ class LoadGML:
         temp = ParseResult()
         return self._parse(obj,temp,"",0)
 
-        print(str(depth)+"-----")
     def _parse(self,obj,result,texture,depth):
         children = []
         for child in obj:
@@ -132,21 +139,7 @@ class LoadGML:
             result = self._parse(child,result,texture,depth+1)
         return result
 
-    #def set_uvmap(self,n_mesh,uvmap):
-    #    #UVMapがあった場合面に設定する
-    #    bm = bmesh.new()
-    #    bm.from_mesh(n_mesh)
-    #    uv = bm.loops.layers.uv.new("UVMap")
-    #    cnt = 0
-    #    for face in bm.faces:
-    #        #for loop in face.loops:
-    #        for i in range(len(face.loops)):
-    #            if len(uvmap[cnt]) > i* 2:
-    #                face.loops[i][uv].uv = [uvmap[cnt][i*2],uvmap[cnt][i*2+1]]
-    #        cnt += 1
-    #    bm.to_mesh(n_mesh)
-    #    n_mesh.update()
-    def positionSet(self,result,clat,clon,celev,scale):
+    def positionSet(self,result,clat,clon,celev,scale,viewRange):
         #tets用53393641
         verts = []
         datas = []
@@ -157,6 +150,9 @@ class LoadGML:
             faces_tex = []
             vindex = 0
             uvmap = []
+            dist = self.dc.calc(clat,clon,obj.boundingBox[4],obj.boundingBox[5])
+            if viewRange > 0  and  ( np.abs(dist[0]) > viewRange or np.abs(dist[1])  > viewRange ) : 
+                continue
             #print(obj["id"],obj["enableTexture"])
             for o2 in obj.posList:
                 lid = "-"
@@ -237,5 +233,3 @@ class JapanMeshTool:
         latlon2 = self.toLatLon(self.getNeighbor(meshcode, 1, 1))
         #return new float[2] { (latlon1[0] + latlon2[0]) / 2, (latlon1[1] + latlon2[1]) / 2 }
         return [ (latlon1[0] + latlon2[0]) / 2 ,(latlon1[1] + latlon2[1]) /2]
-if __name__ == "__main__":
-    pass

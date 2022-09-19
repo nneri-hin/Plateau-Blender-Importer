@@ -1,7 +1,7 @@
 bl_info = {
     "name": "Import Plateau CityGML",
     "author": "Hin(@thamurian)",
-    "version": (0, 9, 1),
+    "version": (0, 9, 2),
     "blender": (3, 0, 0),
     #"support":"TESTING",
     "location":"File > Import-Export",
@@ -47,6 +47,11 @@ class PlateauImporter(bpy.types.Operator, ImportHelper):
         description="Scale object size",
         default=1.0
         )
+    range: FloatProperty(
+        name="Range",
+        description="Effective distance(km). If a negative value is entered, it is assumed to be infinite.",
+        default=-1
+        )
 
     def execute(self,context):
         pass
@@ -63,7 +68,7 @@ class PlateauImporter(bpy.types.Operator, ImportHelper):
         for i in self.files:
             path_to_file = (os.path.join(directory, i.name))
             result = loader.load(path_to_file)
-            poly = loader.positionSet(result,clat,clon,0,self.scale)
+            poly = loader.positionSet(result,clat,clon,0,self.scale,self.range * 1000)
             setmesh.mesh(context,poly,directory)
 
         return {'FINISHED'}
