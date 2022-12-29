@@ -1,7 +1,7 @@
 bl_info = {
     "name": "Import Plateau CityGML",
     "author": "Hin(@thamurian)",
-    "version": (0, 9, 2),
+    "version": (0, 9, 3),
     "blender": (3, 0, 0),
     #"support":"TESTING",
     "location":"File > Import-Export",
@@ -69,7 +69,7 @@ class PlateauImporter(bpy.types.Operator, ImportHelper):
             path_to_file = (os.path.join(directory, i.name))
             result = loader.load(path_to_file)
             poly = loader.positionSet(result,clat,clon,0,self.scale,self.range * 1000)
-            setmesh.mesh(context,poly,directory)
+            setmesh.mesh(context,poly,directory,i.name)
 
         return {'FINISHED'}
 def menu_import(self, context):
