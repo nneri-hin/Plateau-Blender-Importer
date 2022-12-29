@@ -29,9 +29,9 @@ class Object:
         self.minLod = 10
         self.maxLod = 0
         for verts in posList:
-            if verts.lodType == "LOD0RE":
-                #RoofEdgeだけの場合はLOD0は無視する。FootPrintがあればそっちを使う
-                continue
+            #if verts.lodType == "LOD0RE":
+            #    #RoofEdgeだけの場合はLOD0は無視する。FootPrintがあればそっちを使う
+            #    continue
             if self.maxLod < verts.lod :
                 self.maxLod = verts.lod
             if self.minLod > verts.lod :
@@ -205,7 +205,7 @@ class LoadGML:
                     lon = o2.vertex[i+1] 
                     hig = o2.vertex[i+2] 
                     key = str(lat)+","+str(lon)+","+str(hig)
-                    if o2.lod != obj.minLod:
+                    if o2.lod != obj.maxLod:
                         continue
                     if key in vertsMerge:
                         indexes.append(vertsMerge[key])
