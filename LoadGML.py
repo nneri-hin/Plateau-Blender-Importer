@@ -10,14 +10,34 @@ import math
 import numpy as np
 import os 
 
+lodTypes = {
+        "LOD0FP":0,
+        "LOD0RE":0,
+        "LOD1":1,
+        "LOD2":2,
+        "LODX":2
+}
 class Verts:
-    def __init__(self,_id,vertex):
+    def __init__(self,_id,vertex,lodType):
         self.vertex = vertex
         self.id = _id
+        self.lod = lodTypes[lodType]
+        self.lodType = lodType
 class Object:
     def __init__(self,_id,posList,enableTexture,uri):
         self.id = _id
         self.posList = posList
+        self.minLod = 10
+        self.maxLod = 0
+        for verts in posList:
+            #if verts.lodType == "LOD0RE":
+            #    #RoofEdgeだけの場合はLOD0は無視する。FootPrintがあればそっちを使う
+            #    continue
+            if self.maxLod < verts.lod :
+                self.maxLod = verts.lod
+            if self.minLod > verts.lod :
+                self.minLod = verts.lod
+            pass
         self.enableTexture = enableTexture
         self.uri = uri
         self.boundingBox = np.array([90,180,-90,-180,0,0],dtype=np.float64)
@@ -69,22 +89,40 @@ class LoadGML:
         self.CITYOBJECT  = "{http://www.opengis.net/citygml/2.0}cityObjectMember"
         self.TEXCOORD    = "{http://www.opengis.net/citygml/appearance/2.0}TexCoordList"
         self.BOUNDED     = "{http://www.opengis.net/citygml/building/2.0}boundedBy"
+
+        self.LOD0FP      = "{http://www.opengis.net/citygml/building/2.0}lod0FootPrint"
+        self.LOD0RE      = "{http://www.opengis.net/citygml/building/2.0}lod0RoofEdge"
+        self.LOD1        = "{http://www.opengis.net/citygml/building/2.0}lod1Solid"
+        self.LOD2        = "{http://www.opengis.net/citygml/building/2.0}lod2Solid"
+
         self.dc = DistanceCalc()
-    def searchPosList(self,data,posList,enableTexture,uri):
+    def searchPosList(self,data,posList,enableTexture,uri,lod):
         for child in data:
-            (posList,enableTexture,uri) = self.searchPosList(child,posList,enableTexture,uri)
+            if child.tag == self.LOD0FP:
+                lod = "LOD0FP"
+            if child.tag == self.LOD0RE:
+                lod = "LOD0RE"
+            if child.tag == self.LOD1:
+                lod = "LOD1"
+            if child.tag == self.LOD2:
+                lod = "LOD2"
+            (posList,enableTexture,uri,lod) = self.searchPosList(child,posList,enableTexture,uri,lod)
+
             if child.tag == self.POSLIST:
                 gmlid = "0"
                 if self.GMLID in data.attrib:
                     gmlid = data.attrib[self.GMLID] 
                     enableTexture = True
                 #posList.append({"id":gmlid,"vertex":np.asfarray(child.text.split(" "),dtype=float)})
-                posList.append(Verts(gmlid, np.asfarray(child.text.split(" "),dtype=np.float64) ) )
-        return (posList,enableTexture,uri)
+                posList.append(Verts(gmlid, np.asfarray(child.text.split(" "),dtype=np.float64),lod ) )
+        return (posList,enableTexture,uri,lod)
+
     def CreateDict(self,data):
         gmlid = data.attrib[self.GMLID]
         posList = []
-        (posList,enableTexture,uri)= self.searchPosList(data,posList,False,"")
+        (posList,enableTexture,uri,lod)= self.searchPosList(data,posList,False,"","LODX")
+        #for i in posList:
+        #    print(gmlid,i.lod)
         #return {"posList":posList,"id":gmlid,"enableTexture":enableTexture,"uri":uri}
         return Object(gmlid,posList,enableTexture,uri)
 
@@ -121,11 +159,9 @@ class LoadGML:
     def _parse(self,obj,result,texture,depth):
         children = []
         for child in obj:
-            #if child.tag == "{http://www.opengis.net/citygml/2.0}cityObjectMember":
             if child.tag == self.CITYOBJECT:
                 o = self.CityObjectParse(child)
                 result.objects.append(o)
-            #elif child.tag  == "{http://www.opengis.net/citygml/appearance/2.0}TexCoordList":
             elif child.tag == self.TEXCOORD:
                 result = self.UVParse(child,result,texture)
                 #print(str(depth)+":TEXCOORD")
@@ -154,7 +190,7 @@ class LoadGML:
             if viewRange > 0  and  ( np.abs(dist[0]) > viewRange or np.abs(dist[1])  > viewRange ) : 
                 continue
             #print(obj["id"],obj["enableTexture"])
-            for o2 in obj.posList:
+            for o2 in obj.posList:#osはposList
                 lid = "-"
                 if obj.enableTexture and o2.id == "0":
                     #テクスチャ有効時、idが0のものはスキップする
@@ -168,11 +204,14 @@ class LoadGML:
                 #else:
                 #    uvmap.append([])
                 indexes = []
+                lodSplit = [[],[],[]]#lod0~2
                 for i in range(0,len(o2.vertex),3):
                     lat = o2.vertex[i]
                     lon = o2.vertex[i+1] 
                     hig = o2.vertex[i+2] 
                     key = str(lat)+","+str(lon)+","+str(hig)
+                    if o2.lod != obj.maxLod:
+                        continue
                     if key in vertsMerge:
                         indexes.append(vertsMerge[key])
                     else:
