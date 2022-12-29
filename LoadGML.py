@@ -15,6 +15,7 @@ lodTypes = {
         "LOD0RE":0,
         "LOD1":1,
         "LOD2":2,
+        "LODX":2
 }
 class Verts:
     def __init__(self,_id,vertex,lodType):
@@ -115,7 +116,7 @@ class LoadGML:
     def CreateDict(self,data):
         gmlid = data.attrib[self.GMLID]
         posList = []
-        (posList,enableTexture,uri,lod)= self.searchPosList(data,posList,False,"",10)
+        (posList,enableTexture,uri,lod)= self.searchPosList(data,posList,False,"","LODX")
         #for i in posList:
         #    print(gmlid,i.lod)
         #return {"posList":posList,"id":gmlid,"enableTexture":enableTexture,"uri":uri}
