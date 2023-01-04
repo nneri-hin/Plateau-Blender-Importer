@@ -52,6 +52,11 @@ class PlateauImporter(bpy.types.Operator, ImportHelper):
         description="Effective distance(km). If a negative value is entered, it is assumed to be infinite.",
         default=-1
         )
+    limitType: BoolProperty(
+            name="Range limit polygon units",
+            description="Delete out-of-range as polygon units",
+            default=False
+        )
 
     def execute(self,context):
         pass
