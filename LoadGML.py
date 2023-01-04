@@ -15,7 +15,7 @@ lodTypes = {
         "LOD0RE":0,
         "LOD1":1,
         "LOD2":2,
-        "LODX":2
+        "LODX":3
 }
 class Verts:
     def __init__(self,_id,vertex,lodType):
@@ -89,12 +89,11 @@ class LoadGML:
         self.CITYOBJECT  = "{http://www.opengis.net/citygml/2.0}cityObjectMember"
         self.TEXCOORD    = "{http://www.opengis.net/citygml/appearance/2.0}TexCoordList"
         self.BOUNDED     = "{http://www.opengis.net/citygml/building/2.0}boundedBy"
-
         self.LOD0FP      = "{http://www.opengis.net/citygml/building/2.0}lod0FootPrint"
         self.LOD0RE      = "{http://www.opengis.net/citygml/building/2.0}lod0RoofEdge"
         self.LOD1        = "{http://www.opengis.net/citygml/building/2.0}lod1Solid"
         self.LOD2        = "{http://www.opengis.net/citygml/building/2.0}lod2Solid"
-
+        self.LOD2MS      = "{http://www.opengis.net/citygml/building/2.0}lod2MultiSurface"
         self.dc = DistanceCalc()
     def searchPosList(self,data,posList,enableTexture,uri,lod):
         for child in data:
@@ -106,8 +105,9 @@ class LoadGML:
                 lod = "LOD1"
             if child.tag == self.LOD2:
                 lod = "LOD2"
+            if child.tag == self.LOD2MS:
+                lod = "LOD2"
             (posList,enableTexture,uri,lod) = self.searchPosList(child,posList,enableTexture,uri,lod)
-
             if child.tag == self.POSLIST:
                 gmlid = "0"
                 if self.GMLID in data.attrib:
@@ -116,7 +116,6 @@ class LoadGML:
                 #posList.append({"id":gmlid,"vertex":np.asfarray(child.text.split(" "),dtype=float)})
                 posList.append(Verts(gmlid, np.asfarray(child.text.split(" "),dtype=np.float64),lod ) )
         return (posList,enableTexture,uri,lod)
-
     def CreateDict(self,data):
         gmlid = data.attrib[self.GMLID]
         posList = []
