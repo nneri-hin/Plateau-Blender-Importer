@@ -174,7 +174,7 @@ class LoadGML:
             result = self._parse(child,result,texture,depth+1)
         return result
 
-    def positionSet(self,result,clat,clon,celev,scale,viewRange):
+    def positionSet(self,result,clat,clon,celev,scale,viewRange,limitType):
         #tets用53393641
         verts = []
         datas = []
@@ -186,7 +186,7 @@ class LoadGML:
             vindex = 0
             uvmap = []
             dist = self.dc.calc(clat,clon,obj.boundingBox[4],obj.boundingBox[5])
-            if viewRange > 0  and  ( np.abs(dist[0]) > viewRange or np.abs(dist[1])  > viewRange ) : 
+            if not limitType and viewRange > 0  and  ( np.abs(dist[0]) > viewRange or np.abs(dist[1])  > viewRange ) : 
                 continue
             #print(obj["id"],obj["enableTexture"])
             for o2 in obj.posList:#osはposList
@@ -214,13 +214,16 @@ class LoadGML:
                     if key in vertsMerge:
                         indexes.append(vertsMerge[key])
                     else:
+                        (x,y) = self.dc.calc(lat,lon,clat,clon)
+                        if limitType and viewRange > 0  and  ( np.abs(x) > viewRange or np.abs(y)  > viewRange ) : 
+                            #リミットタイプがTrueの時頂点単位で削除
+                            continue
                         vertsMerge[key] = vindex
                         indexes.append(vindex)
-                        (x,y) = self.dc.calc(lat,lon,clat,clon)
                         hig = hig - celev
                         verts.append([x*scale,y*scale,hig*scale])
                         vindex += 1
-                if len(indexes) > 0 :
+                if len(indexes) > 2 : #面を貼る場合最低3頂点必要
                     faces.append(indexes)
             datas.append({ "obj":obj,"verts":verts,"faces":faces,"uvmap":uvmap })
         return {"datas":datas,"textures":result.textures}
