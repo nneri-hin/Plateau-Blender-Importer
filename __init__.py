@@ -52,9 +52,9 @@ class PlateauImporter(bpy.types.Operator, ImportHelper):
         description="Effective distance(km). If a negative value is entered, it is assumed to be infinite.",
         default=-1
         )
-    limitType: BoolProperty(
-            name="Range limit polygon units",
-            description="Delete out-of-range as polygon units",
+    limit_type: BoolProperty(
+            name="Range limit vertex units",
+            description="Delete out-of-range as vertex units",
             default=False
         )
 
@@ -73,7 +73,8 @@ class PlateauImporter(bpy.types.Operator, ImportHelper):
         for i in self.files:
             path_to_file = (os.path.join(directory, i.name))
             result = loader.load(path_to_file)
-            poly = loader.positionSet(result,clat,clon,0,self.scale,self.range * 1000)
+            poly = loader.positionSet(result,clat,clon,0,self.scale,self.range * 500,self.limit_type)
+
             setmesh.mesh(context,poly,directory,i.name)
 
         return {'FINISHED'}
