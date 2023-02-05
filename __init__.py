@@ -55,7 +55,6 @@ class PlateauImporter(bpy.types.Operator, ImportHelper):
     limit_type: BoolProperty(
             name="Range limit vertex units",
             description="Delete out-of-range as vertex units",
-            #description="Delete out-of-range as vertex units",
             default=False
         )
 
