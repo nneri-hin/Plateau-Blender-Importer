@@ -11,6 +11,7 @@ bl_info = {
 }
 
 import os
+import numpy as np
 #from xml.etree import ElementTree as et
 import bpy
 from bpy_extras.io_utils import ImportHelper
@@ -31,15 +32,14 @@ from . import SetMesh
 #
 
 class PlateauImporter(bpy.types.Operator, ImportHelper):
-
     bl_idname = "hin.plateau_importer"
     bl_label = "pick an gml file(s)"
     filename_ext = ".gml"
     use_filter_folder = True
     files: CollectionProperty(type=bpy.types.PropertyGroup)
     origin_setting_jmc: StringProperty(
-        name="Origin Japan Mesh Code",
-        description="Origin Japan Mesh Code",
+        name="Origin Japan Mesh Code Or Latlon ",
+        description="Origin Japan Mesh Code Or Latlon(Ex.35.680, 139.766)",
         default="53394611"
         )
     scale: FloatProperty(
@@ -64,12 +64,27 @@ class PlateauImporter(bpy.types.Operator, ImportHelper):
         loader = LoadGML.LoadGML()
         setmesh = SetMesh.SetMesh()
         meshcode = "53394611"
-        if len(self.origin_setting_jmc) ==  8  and re.search("\D",self.origin_setting_jmc):
-            print("Wrong meshcode")
-        else:
-            meshcode = self.origin_setting_jmc
-        jmTool = LoadGML.JapanMeshTool()
-        clat,clon = jmTool.getCenter(meshcode)
+        clat,clon = 0,0
+        isMeshCode = True
+        if re.search(',',self.origin_setting_jmc) :
+            #Center is Latlon
+            slat,slon = self.origin_setting_jmc.split(",")
+            isMeshCode = False
+            try:
+                clat = float(slat)
+                clon = float(slon)
+            except:
+                print("ParseError")
+                isMeshCode = True
+                pass
+        if isMeshCode:
+            if len(self.origin_setting_jmc) !=  8  or re.search("\D",self.origin_setting_jmc):
+                print("Wrong meshcode")
+            else:
+                meshcode = self.origin_setting_jmc
+            print(meshcode)
+            jmTool = LoadGML.JapanMeshTool()
+            clat,clon = jmTool.getCenter(meshcode)
         for i in self.files:
             path_to_file = (os.path.join(directory, i.name))
             result = loader.load(path_to_file)
