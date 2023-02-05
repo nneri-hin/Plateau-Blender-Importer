@@ -49,7 +49,7 @@ class SetMesh:
         bm.to_mesh(n_mesh)
         n_mesh.update()
         return texture
-    def mesh(self,context,poly,directory,name):
+    def mesh(self,context,poly,directory,name,import_texture):
         materials = {}
         collection = bpy.data.collections.new(name)
         bpy.context.scene.collection.children.link(collection)
@@ -67,7 +67,7 @@ class SetMesh:
             n_mesh.update()
             #bObject = object_utils.object_data_add(context, n_mesh, operator=None)
             bObject = bpy.data.objects.new(obj.id,n_mesh)
-            if obj.enableTexture :
+            if obj.enableTexture and import_texture :
                 texture = self.set_uvmap(n_mesh,uvmap)
                 #この辺多分そのうちかえる
                 if texture != "":

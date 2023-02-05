@@ -57,6 +57,11 @@ class PlateauImporter(bpy.types.Operator, ImportHelper):
             description="Delete out-of-range as vertex units",
             default=False
         )
+    import_texture:BoolProperty(
+            name="Import Texture",
+            description="Import Textuure",
+            default=True
+        )
 
     def execute(self,context):
         pass
@@ -90,7 +95,7 @@ class PlateauImporter(bpy.types.Operator, ImportHelper):
             result = loader.load(path_to_file)
             poly = loader.positionSet(result,clat,clon,0,self.scale,self.range * 500,self.limit_type)
 
-            setmesh.mesh(context,poly,directory,i.name)
+            setmesh.mesh(context,poly,directory,i.name,self.import_texture)
 
         return {'FINISHED'}
 def menu_import(self, context):
