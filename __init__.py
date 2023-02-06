@@ -1,7 +1,7 @@
 bl_info = {
     "name": "Import Plateau CityGML",
     "author": "Hin(@thamurian)",
-    "version": (0, 9, 3),
+    "version": (0, 9, 4),
     "blender": (3, 0, 0),
     #"support":"TESTING",
     "location":"File > Import-Export",
