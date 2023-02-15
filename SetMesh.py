@@ -8,6 +8,17 @@ from bpy_extras import object_utils
 import numpy as np
 import os
 
+class Textures:
+    def __init__(self):
+        self.textures = []
+        self.cnt = 0
+        pass
+    def add(self,texture):
+        if texture not in self.textures:
+            self.textures.append(texture)
+        return self.textures.index(texture)
+        
+
 
 class SetMesh:
     def __init__(self):
@@ -38,6 +49,7 @@ class SetMesh:
         uv = bm.loops.layers.uv.new("UVMap")
         cnt = 0
         texture = ""
+        textures = Textures()
         for face in bm.faces:
             #for loop in face.loops:
             for i in range(len(face.loops)):
@@ -45,10 +57,11 @@ class SetMesh:
                     face.loops[i][uv].uv = [uvmap[cnt]["uv"][i*2],uvmap[cnt]["uv"][i*2+1]]
                     if uvmap[cnt]["texture"] != "":
                         texture = uvmap[cnt]["texture"]
+                        face.material_index =  textures.add(uvmap[cnt]["texture"])
             cnt += 1
         bm.to_mesh(n_mesh)
         n_mesh.update()
-        return texture
+        return textures.textures
     def mesh(self,context,poly,directory,name,import_texture):
         materials = {}
         collection = bpy.data.collections.new(name)
@@ -68,10 +81,15 @@ class SetMesh:
             #bObject = object_utils.object_data_add(context, n_mesh, operator=None)
             bObject = bpy.data.objects.new(obj.id,n_mesh)
             if obj.enableTexture and import_texture :
-                texture = self.set_uvmap(n_mesh,uvmap)
+                textures = self.set_uvmap(n_mesh,uvmap)
                 #この辺多分そのうちかえる
-                if texture != "":
-                    bObject.active_material = materials[texture]
+                #if texture != "":
+                if len(textures) != 0:
+                    for i in range(len(textures)):
+                        texture = textures[i]
+                        bObject.data.materials.append(materials[texture])
+                    #bObject.active_material = materials[texture]
+                    pass
                 else :
                     bObject.active_material =  blank
             else :
