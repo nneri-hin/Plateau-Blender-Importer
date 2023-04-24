@@ -225,7 +225,8 @@ class LoadGML:
                         vindex += 1
                 if len(indexes) > 2 : #面を貼る場合最低3頂点必要
                     faces.append(indexes)
-            datas.append({ "obj":obj,"verts":verts,"faces":faces,"uvmap":uvmap })
+            if len(faces) > 0: #最低1面必要
+                datas.append({ "obj":obj,"verts":verts,"faces":faces,"uvmap":uvmap })
         return {"datas":datas,"textures":result.textures}
     def get_image_path(self,filename,texture):
         dir = os.path.dirname(filename)
