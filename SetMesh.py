@@ -23,7 +23,7 @@ class Textures:
 class SetMesh:
     def __init__(self):
         pass
-    def create_material(self,directory,texture):
+    def create_material(self,directory,texture,emission):
         path_to_file = (os.path.join(directory, texture))
         image = bpy.data.images.load(path_to_file)
         mat = bpy.data.materials.new(texture)
@@ -32,12 +32,42 @@ class SetMesh:
         tex = nodes.new(type='ShaderNodeTexImage')
         tex.location = (-300,300)
         tex.image = image
-
-        bsdf = nodes['Principled BSDF']
-        mat.node_tree.links.new(tex.outputs[0],bsdf.inputs[0])
+        bsdf = None
+        #ShaderNodeBsdfPrinciple
+        #ShaderNodeEmission
+        output = None
+        em = None
+        if emission :
+            em = nodes.new("ShaderNodeEmission")
+        for node in nodes:
+            if node.type == "BSDF_PRINCIPLED":
+                bsdf =  node
+            if node.type == "OUTPUT_MATERIAL":
+                output = node
+        #bsdf = nodes['Principled BSDF']
+        if bsdf is not None:
+            if emission:
+                mat.node_tree.links.new(tex.outputs[0],em.inputs[0])
+                mat.node_tree.links.new(em.outputs[0],output.inputs[0])
+                nodes.remove(bsdf)
+            else:
+                mat.node_tree.links.new(tex.outputs[0],bsdf.inputs[0])
         return mat
-    def create_blank_material(self):
+    def create_blank_material(selfa,emission):
         mat = bpy.data.materials.new("Default")
+        mat.use_nodes = True
+        nodes = mat.node_tree.nodes
+        if emission :
+            em = nodes.new("ShaderNodeEmission")
+        for node in nodes:
+            if node.type == "BSDF_PRINCIPLED":
+                bsdf =  node
+            if node.type == "OUTPUT_MATERIAL":
+                output = node
+        if bsdf is not None:
+            if emission:
+                mat.node_tree.links.new(em.outputs[0],output.inputs[0])
+                nodes.remove(bsdf)
         mat.use_nodes = True
         return mat
         pass
@@ -62,13 +92,13 @@ class SetMesh:
         bm.to_mesh(n_mesh)
         n_mesh.update()
         return textures.textures
-    def mesh(self,context,poly,directory,name,import_texture):
+    def mesh(self,context,poly,directory,name,import_texture,shader_type):
         materials = {}
         collection = bpy.data.collections.new(name)
         bpy.context.scene.collection.children.link(collection)
-        blank = self.create_blank_material()
+        blank = self.create_blank_material(shader_type == "AllEmission")
         for texture in poly["textures"]:
-            materials[texture] = self.create_material(directory,texture)
+            materials[texture] = self.create_material(directory,texture,shader_type !=  "PrincipledBSDF")
         for data in poly["datas"]:
             obj      = data["obj"]
             verts    = data["verts"]
