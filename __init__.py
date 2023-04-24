@@ -31,6 +31,14 @@ from . import SetMesh
 #    imp.reload(LoadGML)
 #
 
+def get_shader_enum(scene,context):
+    items = [
+            ("PrincipledBSDF" ,"PrincipledBSDF" ,"PrincipledBSDF"        ,"PrincipledBSDF",0),
+            ("TextureEmission","TextureEmission","Emission(TextureOnly)","TextureEmission",1),
+            ("AllEmission"    ,"AllEmission"    ,"Emission(AllMaterial)" ,"AllEmission",2)
+            ]
+    return items
+
 class PlateauImporter(bpy.types.Operator, ImportHelper):
     bl_idname = "hin.plateau_importer"
     bl_label = "pick an gml file(s)"
@@ -61,6 +69,12 @@ class PlateauImporter(bpy.types.Operator, ImportHelper):
             name="Import Texture",
             description="Import Textuure",
             default=True
+        )
+    shader_type:EnumProperty(
+            name = "Shader Type",
+            description = "select shader type. princpled bsdf of emission",
+            #default="PrincipledBSDF",
+            items = get_shader_enum
         )
 
     def execute(self,context):
@@ -94,8 +108,8 @@ class PlateauImporter(bpy.types.Operator, ImportHelper):
             path_to_file = (os.path.join(directory, i.name))
             result = loader.load(path_to_file)
             poly = loader.positionSet(result,clat,clon,0,self.scale,self.range * 500,self.limit_type)
-
-            setmesh.mesh(context,poly,directory,i.name,self.import_texture)
+            print(self.shader_type)
+            setmesh.mesh(context,poly,directory,i.name,self.import_texture,self.shader_type)
 
         return {'FINISHED'}
 def menu_import(self, context):
