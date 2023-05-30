@@ -10,7 +10,7 @@ CityGMLであれば読み込めるかもしれませんがとくに確認を取�
 また、地域メッシュコード入力欄に緯度経度をカンマ区切りで入力すると緯度経度中心にすることができます。
 
 
-GithubのページのCodeのDownloadZipからzipファイルを入手してください。
+[このリンクから](https://github.com/nneri-hin/Plateau-Blender-Importer/archive/master.zip)Zipファイルを入手してください。
 BlenderのEidt(編集)->Preference(プリファレンス)->addon(アドオン)->Install(インストール)
 でダウンロードしたzipファイルを読み込んでください。
 
